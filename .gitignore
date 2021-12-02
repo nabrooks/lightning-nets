@@ -51,6 +51,15 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
+# Log and data dirs
+logs/*
+data/*
+MNIST/*
+
+# Vs Code stuff
+venv/*
+.vscode/*
+
 # Translations
 *.mo
 *.pot
