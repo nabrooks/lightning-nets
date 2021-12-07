@@ -1,13 +1,8 @@
 from typing import Any, Dict, List, Union
-
 import torch
 import torch.nn as nn
-from torch.autograd import grad as torch_grad
-import numpy
 from pytorch_lightning import LightningModule
 from torchmetrics.metric import Metric
-
-
 
 class BoundaryEquilibriumGanModule(LightningModule):
     def __init__(
@@ -15,7 +10,7 @@ class BoundaryEquilibriumGanModule(LightningModule):
         generator_network: nn.Module = None,
         discriminator_network: nn.Module = None,
         optimizer_function: Any = torch.optim.Adam,
-        optimizer_params: Dict = dict(lr=0.0003, betas=(0.5, 0.9)),
+        optimizer_params: Dict = dict(lr=0.001, betas=(0.5, 0.9)),
         batch_size:int = 32,
         metrics: Union[List[Metric],Metric] = [],
     ):

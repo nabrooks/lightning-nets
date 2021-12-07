@@ -13,7 +13,7 @@ import pytorch_lightning.loggers as pl_loggers
 
 #from lightning_nets.data import *
 from lightning_nets.hooks import *
-from lightning_nets.models.networks.networks_2d import U_Net_2D
+from lightning_nets.models.networks.networks_2d import U_Net_2D, U_Net_2D_Mod, U_Net_2D_Mod_2
 from lightning_nets.modules import *
 from lightning_nets.hooks.plotters import *
 
@@ -72,83 +72,45 @@ class MnistDataModule(LightningDataModule):
     def predict_dataloader(self):
         return DataLoader(self.mnist_predict, batch_size=self.batch_size)
 
-
 def normal_init(m, mean, std):
-    if isinstance(m, nn.ConvTranspose2d) or isinstance(m, nn.Conv2d):
+    if isinstance(m, (nn.Linear, nn.Conv2d, nn.ConvTranspose2d)):
         m.weight.data.normal_(mean, std)
-        m.bias.data.zero_()
+        if m.bias.data is not None:
+            m.bias.data.zero_()
 
 class Generator(nn.Module):
-    def __init__(self, latent_dim, img_shape, d=128):
+    def __init__(self, latent_dim, img_shape):
         super(Generator, self).__init__()
-        self.deconv1_1 = nn.ConvTranspose2d(100, d*2, 4, 1, 0)
-        self.deconv1_1_bn = nn.BatchNorm2d(d*2)
-        self.deconv1_2 = nn.ConvTranspose2d(10, d*2, 4, 1, 0)
-        self.deconv1_2_bn = nn.BatchNorm2d(d*2)
-        self.deconv2 = nn.ConvTranspose2d(d*4, d*2, 4, 2, 1)
-        self.deconv2_bn = nn.BatchNorm2d(d*2)
-        self.deconv3 = nn.ConvTranspose2d(d*2, d, 4, 2, 1)
-        self.deconv3_bn = nn.BatchNorm2d(d)
-        self.deconv4 = nn.ConvTranspose2d(d, 1, 4, 2, 1)
-        self.onehot = torch.zeros(10, 10)
-        self.onehot = self.onehot.scatter_(1, torch.LongTensor([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).view(10,1), 1).view(10, 10, 1, 1)
 
-        if torch.cuda.is_available():
-            self.onehot = self.onehot.cuda()
-            
-    # weight_init
-    def weight_init(self, mean, std):
-        for m in self._modules:
-            normal_init(self._modules[m], mean, std)
+        self.init_size = img_shape[1] // 4
+        self.l1 = nn.Sequential(nn.Linear(latent_dim, 128 * self.init_size ** 2))
+        self.l1_noise = nn.Sequential(nn.Linear(latent_dim, 128 * self.init_size ** 2))
+        self.l1_condition = nn.Sequential(nn.Linear(latent_dim, 128 * self.init_size ** 2))
 
-    # forward method
-    def forward(self, input):
-        z = input[:,1:].view(-1, 100, 1, 1)
-        class_labels = input[:,0].long()
-        label_one_hot = self.onehot[class_labels]#F.one_hot(class_labels, num_classes=10)
-        x = F.relu(self.deconv1_1_bn(self.deconv1_1(z)))
-        y = F.relu(self.deconv1_2_bn(self.deconv1_2(label_one_hot)))
-        x = torch.cat([x, y], 1)
-        x = F.relu(self.deconv2_bn(self.deconv2(x)))
-        x = F.relu(self.deconv3_bn(self.deconv3(x)))
-        x = torch.tanh(self.deconv4(x))
-        # x = F.relu(self.deconv4_bn(self.deconv4(x)))
-        # x = F.tanh(self.deconv5(x))
-
-        return x
-
-class UnetDiscriminator(nn.Module):
-    def __init__(self, img_shape):
-        super(Discriminator, self).__init__()
-
-        # Upsampling
-        self.down = nn.Sequential(nn.Conv2d(img_shape[0], 64, 3, 2, 1), nn.ReLU())
-        # Fully-connected layers
-        self.down_size = img_shape[1] // 2
-        down_dim = 64 * (img_shape[1] // 2) ** 2
-        self.fc = nn.Sequential(
-            nn.Linear(down_dim, 32),
-            nn.BatchNorm1d(32, 0.8),
-            nn.ReLU(inplace=True),
-            nn.Linear(32, down_dim),
-            nn.BatchNorm1d(down_dim),
-            nn.ReLU(inplace=True),
+        self.conv_blocks = nn.Sequential(
+            nn.BatchNorm2d(128),
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(128, 128, 3, stride=1, padding=1),
+            nn.BatchNorm2d(128, 0.8),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(128, 64, 3, stride=1, padding=1),
+            nn.BatchNorm2d(64, 0.8),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(64, img_shape[0], 3, stride=1, padding=1),
+            nn.Tanh(),
         )
-        # Upsampling
-        self.up = nn.Sequential(nn.Upsample(scale_factor=2), nn.Conv2d(64, img_shape[0], 3, 1, 1))
-
-    # weight_init
+    
     def weight_init(self, mean, std):
-        for m in self._modules:
-            normal_init(self._modules[m], mean, std)
+        normal_init(self, mean, std)
 
-    def forward(self, input, output):
-        c = input
-        img = output
-        out = self.down(img)
-        out = self.fc(out.view(out.size(0), -1))
-        out = self.up(out.view(out.size(0), 64, self.down_size, self.down_size))
-        return out
+    def forward(self, input):
+        condition = input[:,0]
+        noise = input[:,1:]
+        out = self.l1(noise)
+        out = out.view(out.shape[0], 128, self.init_size, self.init_size)
+        img = self.conv_blocks(out)
+        return img
 
 class Discriminator(nn.Module):
     def __init__(self, img_shape):
@@ -169,16 +131,12 @@ class Discriminator(nn.Module):
         )
         # Upsampling
         self.up = nn.Sequential(nn.Upsample(scale_factor=2), nn.Conv2d(64, img_shape[0], 3, 1, 1))
-
-    # weight_init
+    
     def weight_init(self, mean, std):
-        for m in self._modules:
-            normal_init(self._modules[m], mean, std)
+        normal_init(self, mean, std)
 
     def forward(self, input, output):
-        c = input
-        img = output
-        out = self.down(img)
+        out = self.down(output)
         out = self.fc(out.view(out.size(0), -1))
         out = self.up(out.view(out.size(0), 64, self.down_size, self.down_size))
         return out
@@ -264,14 +222,12 @@ img_shape = [1, IMG_SIZE, IMG_SIZE]
 # lazily (only when needed). can be exchanged easily
 def generator_ctor():
     G = Generator(LATENT_SIZE, img_shape)
-    #G = generator()
-    G.weight_init(0,0.02)
+    G.weight_init(0, 0.02)
     return G
 
 def discriminator_ctor():
     D = Discriminator(img_shape)
-    #D = discriminator()
-    D.weight_init(0,0.02)
+    D.weight_init(0, 0.02)
     return D
 
 csv_logger = pl_loggers.CSVLogger(save_dir=os.getcwd(), name="logs", flush_logs_every_n_steps=3)

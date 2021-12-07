@@ -1,6 +1,7 @@
 import os
 import setuptools
 
+from lightning_nets.models.networks import *
 
 import numpy as np
 from pytorch_lightning import Trainer
