@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import init
 
-def init_weights(net, init_type='normal', gain=0.02):
+def init_weights_1d(net, init_type='normal', gain=0.02):
     def init_func(m):
         classname = m.__class__.__name__
         if hasattr(m, 'weight') and (classname.find('Conv') != -1 or classname.find('Linear') != -1):
@@ -232,6 +232,112 @@ class U_Net23_1D(nn.Module):
 
         d1 = self.Conv_1x1(d2)
        
+        if self.out_fn == None:
+            return d1
+        else:
+            return self.out_fn(d1)
+        #return torch.tanh(d1)
+        #return d1
+
+class U_Net18_1D(nn.Module):
+    def __init__(self, img_ch=3, output_ch=1, batch_norm:bool=True, hidden_activation_fn=nn.ReLU, ending_activation_fn=torch.tanh):
+        super().__init__()
+        self.out_fn = ending_activation_fn
+        activation_fn = hidden_activation_fn
+
+        self.Maxpool = nn.MaxPool1d(kernel_size=2,stride=2)
+
+        self.Conv1 = conv_block_1d(ch_in=img_ch,ch_out=64, batch_norm=batch_norm, activation_fn=activation_fn)
+        self.Conv2 = conv_block_1d(ch_in=64,ch_out=128, batch_norm=batch_norm, activation_fn=activation_fn)
+        self.Conv3 = conv_block_1d(ch_in=128,ch_out=256, batch_norm=batch_norm, activation_fn=activation_fn)
+        self.Conv4 = conv_block_1d(ch_in=256,ch_out=512, batch_norm=batch_norm, activation_fn=activation_fn)
+
+        self.Up4 = up_conv_1d(ch_in=512,ch_out=256, batch_norm=batch_norm, activation_fn=activation_fn)
+        self.Up_conv4 = conv_block_1d(ch_in=512, ch_out=256, batch_norm=batch_norm, activation_fn=activation_fn)
+        
+        self.Up3 = up_conv_1d(ch_in=256,ch_out=128, batch_norm=batch_norm, activation_fn=activation_fn)
+        self.Up_conv3 = conv_block_1d(ch_in=256, ch_out=128, batch_norm=batch_norm, activation_fn=activation_fn)
+        
+        self.Up2 = up_conv_1d(ch_in=128,ch_out=64, batch_norm=batch_norm, activation_fn=activation_fn)
+        self.Up_conv2 = conv_block_1d(ch_in=128, ch_out=64, batch_norm=batch_norm, activation_fn=activation_fn)
+
+        self.Conv_1x1 = nn.Conv1d(64,output_ch,kernel_size=1,stride=1,padding=0)
+
+    def forward(self, x):
+        # encoding path
+        x1 = self.Conv1(x)
+
+        x2 = self.Maxpool(x1)
+        x2 = self.Conv2(x2)
+        
+        x3 = self.Maxpool(x2)
+        x3 = self.Conv3(x3)
+
+        x4 = self.Maxpool(x3)
+        x4 = self.Conv4(x4)
+
+        # decoding path
+        d4 = self.Up4(x4)
+        d4 = torch.cat((x3, d4), dim=1)
+        d4 = self.Up_conv4(d4)
+
+        d3 = self.Up3(d4)
+        d3 = torch.cat((x2, d3), dim=1)
+        d3 = self.Up_conv3(d3)
+
+        d2 = self.Up2(d3)
+        d2 = torch.cat((x1, d2), dim=1)
+        d2 = self.Up_conv2(d2)
+
+        d1 = self.Conv_1x1(d2)
+
+        if self.out_fn == None:
+            return d1
+        else:
+            return self.out_fn(d1)
+        #return torch.tanh(d1)
+        #return d1
+
+class U_Net13_1D(nn.Module):
+    def __init__(self, img_ch=3, output_ch=1, batch_norm:bool=True, hidden_activation_fn=nn.ReLU, ending_activation_fn=torch.tanh):
+        super().__init__()
+        self.out_fn = ending_activation_fn
+        activation_fn = hidden_activation_fn
+
+        self.Maxpool = nn.MaxPool1d(kernel_size=2,stride=2)
+
+        self.Conv1 = conv_block_1d(ch_in=img_ch,ch_out=64, batch_norm=batch_norm, activation_fn=activation_fn)
+        self.Conv2 = conv_block_1d(ch_in=64,ch_out=128, batch_norm=batch_norm, activation_fn=activation_fn)
+        self.Conv3 = conv_block_1d(ch_in=128,ch_out=256, batch_norm=batch_norm, activation_fn=activation_fn)
+        
+        self.Up3 = up_conv_1d(ch_in=256,ch_out=128, batch_norm=batch_norm, activation_fn=activation_fn)
+        self.Up_conv3 = conv_block_1d(ch_in=256, ch_out=128, batch_norm=batch_norm, activation_fn=activation_fn)
+        
+        self.Up2 = up_conv_1d(ch_in=128,ch_out=64, batch_norm=batch_norm, activation_fn=activation_fn)
+        self.Up_conv2 = conv_block_1d(ch_in=128, ch_out=64, batch_norm=batch_norm, activation_fn=activation_fn)
+
+        self.Conv_1x1 = nn.Conv1d(64,output_ch,kernel_size=1,stride=1,padding=0)
+
+    def forward(self, x):
+        # encoding path
+        x1 = self.Conv1(x)
+
+        x2 = self.Maxpool(x1)
+        x2 = self.Conv2(x2)
+        
+        x3 = self.Maxpool(x2)
+        x3 = self.Conv3(x3)
+
+        d3 = self.Up3(x3)
+        d3 = torch.cat((x2, d3), dim=1)
+        d3 = self.Up_conv3(d3)
+
+        d2 = self.Up2(d3)
+        d2 = torch.cat((x1, d2), dim=1)
+        d2 = self.Up_conv2(d2)
+
+        d1 = self.Conv_1x1(d2)
+
         if self.out_fn == None:
             return d1
         else:
