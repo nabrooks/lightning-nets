@@ -13,7 +13,7 @@ import pytorch_lightning.loggers as pl_loggers
 
 #from lightning_nets.data import *
 from lightning_nets.hooks import *
-from lightning_nets.models.networks.networks_2d import U_Net_2D, U_Net_2D_Mod, U_Net_2D_Mod_2
+from lightning_nets.models.networks.networks_2d import U_Net23_2D, U_Net18_2D, U_Net13_2D
 from lightning_nets.modules import *
 from lightning_nets.hooks.plotters import *
 
@@ -240,5 +240,5 @@ trainer_module = BoundaryEquilibriumGanModule(generator_ctor(), discriminator_ct
 plotter = MnistCganImageDataPlotter(output_dir=csv_logger.log_dir)
 
 callback_list = [ EpochInferenceCallback(dataloader=data_module.train_dataloader(), data_plotter=plotter, num_samples=7) ]
-trainer = Trainer(gpus=1, callbacks=callback_list, max_epochs=30, logger=[csv_logger], precision=32)
+trainer = Trainer(gpus=0, callbacks=callback_list, max_epochs=30, logger=[csv_logger], precision=32)
 trainer.fit(trainer_module, data_module)

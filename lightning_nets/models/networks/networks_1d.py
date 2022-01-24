@@ -236,8 +236,6 @@ class U_Net23_1D(nn.Module):
             return d1
         else:
             return self.out_fn(d1)
-        #return torch.tanh(d1)
-        #return d1
 
 class U_Net18_1D(nn.Module):
     def __init__(self, img_ch=3, output_ch=1, batch_norm:bool=True, hidden_activation_fn=nn.ReLU, ending_activation_fn=torch.tanh):
@@ -295,8 +293,6 @@ class U_Net18_1D(nn.Module):
             return d1
         else:
             return self.out_fn(d1)
-        #return torch.tanh(d1)
-        #return d1
 
 class U_Net13_1D(nn.Module):
     def __init__(self, img_ch=3, output_ch=1, batch_norm:bool=True, hidden_activation_fn=nn.ReLU, ending_activation_fn=torch.tanh):
@@ -342,8 +338,6 @@ class U_Net13_1D(nn.Module):
             return d1
         else:
             return self.out_fn(d1)
-        #return torch.tanh(d1)
-        #return d1
 
 class R2U_Net_1D(nn.Module):
     def __init__(self, img_ch=3, output_ch=1, t=2, batch_norm:bool=True, hidden_activation_fn=nn.ReLU, ending_activation_fn=torch.tanh):
@@ -415,8 +409,6 @@ class R2U_Net_1D(nn.Module):
             return d1
         else:
             return self.out_fn(d1)
-        #return torch.tanh(d1)
-        #return d1
 
 class AttU_Net_1D(nn.Module):
     def __init__(self, img_ch=3, output_ch=1, batch_norm:bool=True, hidden_activation_fn=nn.ReLU, ending_activation_fn=torch.tanh):
@@ -493,8 +485,6 @@ class AttU_Net_1D(nn.Module):
             return d1
         else:
             return self.out_fn(d1)
-        #return torch.tanh(d1)
-        #return d1
 
 class R2AttU_Net_1D(nn.Module):
     def __init__(self, img_ch=3, output_ch=1, t=2, batch_norm:bool=True, hidden_activation_fn=nn.ReLU, ending_activation_fn=torch.tanh):
@@ -574,8 +564,6 @@ class R2AttU_Net_1D(nn.Module):
             return d1
         else:
             return self.out_fn(d1)
-        #return torch.tanh(d1)
-        #return d1
 
 class DoubleConv_1D(nn.Module):
     """(convolution => [BN] => ReLU) * 2"""

@@ -10,8 +10,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import torchmetrics
-
 import pytorch_lightning.loggers as pl_loggers
 
 #from lightning_nets.data import *
