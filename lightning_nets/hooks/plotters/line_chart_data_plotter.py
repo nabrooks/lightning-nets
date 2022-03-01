@@ -1,5 +1,4 @@
 import os
-import matplotlib
 import matplotlib.pyplot as plt
 
 import numpy as np
@@ -19,7 +18,7 @@ class LineChartDataPlotter(DataPlotter):
         """
         Save output samples.
         """
-        matplotlib.use('Agg')
+        #matplotlib.use('Agg')
 
         if len(x.shape) == 2 and len(y.shape) == 2 and len(y_pred.shape) == 2:
             x = x.reshape(x.shape[0], 1, x.shape[1])
@@ -68,4 +67,4 @@ class LineChartDataPlotter(DataPlotter):
             plt.clf()
             plt.close()
         
-        matplotlib.use('TkAgg')
+        #matplotlib.use('TkAgg')

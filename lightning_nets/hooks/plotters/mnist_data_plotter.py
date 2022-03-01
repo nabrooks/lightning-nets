@@ -1,5 +1,4 @@
 import os
-import matplotlib
 import matplotlib.pyplot as plt
 
 import torch
@@ -18,7 +17,7 @@ class MnistCganImageDataPlotter(DataPlotter):
         return output_path
 
     def plot_data(self, x, y, y_pred, current_epoch: int, global_step: int):
-        matplotlib.use('Agg')
+        #matplotlib.use('Agg')
 
         plt.close()
         current_output_dir = self._make_path(os.path.join(self.output_dir, f"epoch={current_epoch}-step-{global_step}"))
@@ -54,5 +53,5 @@ class MnistCganImageDataPlotter(DataPlotter):
             plt.cla()
             plt.close()
 
-        matplotlib.use('TkAgg')
+        #matplotlib.use('TkAgg')
         return

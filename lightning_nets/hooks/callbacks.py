@@ -14,8 +14,10 @@ import torchmetrics
 import pytorch_lightning.loggers as pl_loggers
 import pytorch_lightning.callbacks as pl_callbacks
 
-from lightning_nets.data import *
 from lightning_nets.hooks import *
+from lightning_nets.hooks.plotters import *
+
+from lightning_nets.data import *
 from lightning_nets.modules import *
 
 class EpochInferenceCallback(pl_callbacks.Callback):
