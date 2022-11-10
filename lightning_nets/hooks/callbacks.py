@@ -34,7 +34,7 @@ class EpochInferenceCallback(pl_callbacks.Callback):
         self._current_epoch = 0
         self._global_step = 0
 
-    def on_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
+    def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         if self._current_epoch == trainer.current_epoch:
             return
         

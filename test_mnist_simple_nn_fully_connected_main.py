@@ -1,11 +1,12 @@
 import os
 import setuptools
+import torch
+import torch.nn as nn
+print(torch.has_cuda)
 
 import numpy as np
 from pytorch_lightning import Trainer
 
-import torch
-import torch.nn as nn
 
 
 import pytorch_lightning.loggers as pl_loggers

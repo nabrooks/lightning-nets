@@ -33,10 +33,10 @@ class BasicNnModule(LightningModule):
     def forward(self, input):
         return self._net_g(input)
 
-    def on_pretrain_routine_start(self) -> None:
+    def on_fit_start(self) -> None:
         for metric in self._metrics:
             metric = metric.to(self.device)
-        return super().on_pretrain_routine_start()
+        #return super().on_fit_start()
 
     def training_step(self, batch, batch_idx):
         x_t, y_t = batch
